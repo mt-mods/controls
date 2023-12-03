@@ -33,7 +33,11 @@ minetest.register_on_joinplayer(function(player, _)
     --note: could hardcode this, but this is more future proof in case minetest adds more controls
     controls.players[pname] = {}
     for key, _ in pairs(controls_names) do
-        controls.players[pname][key] = {false} --in theory its false when they join, but hard coding just in case
+        --[[
+            in theory the control value is false when they join, but hard coding just in case
+            consider changing this to named key table instead of numeric for better readability???
+        ]]
+        controls.players[pname][key] = {false}
     end
 end)
 
@@ -51,11 +55,23 @@ minetest.register_globalstep(function(dtime)
 
         if not controls.players[pname] then break end --safety check
 
+        --consider using minetest.get_us_time() instead of os.clock()? would need to convert to seconds however
         for key, key_status in pairs(pcontrols) do
-            if(key_status) then --yes, this is a hold or press event, intial testing
+            if key_status and controls.players[pname][key][1]==false then
+                --minetest.chat_send_all("hiii")
                 for _, callback in pairs(controls.registered_on_press) do
                     callback(player, key)
                 end
+                controls.players[pname][key] = {true, os.clock()}
+            elseif key_status and controls.players[pname][key][1]==true then
+                for _, callback in pairs(controls.registered_on_hold) do
+                    callback(player, key, os.clock() - controls.players[pname][key][2])
+                end
+            elseif key_status==false and controls.players[pname][key][1]==true then
+                for _, callback in pairs(controls.registered_on_release) do
+                    callback(player, key, os.clock() - controls.players[pname][key][2])
+                end
+                controls.players[pname][key] = {false}
             end
         end
     end
