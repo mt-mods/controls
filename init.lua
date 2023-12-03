@@ -57,16 +57,16 @@ minetest.register_globalstep(function(dtime)
 
         --consider using minetest.get_us_time() instead of os.clock()? would need to convert to seconds however
         for key, key_status in pairs(pcontrols) do
-            if key_status and controls.players[pname][key][1]==false then
+            if key_status and not controls.players[pname][key][1] then
                 for _, callback in pairs(controls.registered_on_press) do
                     callback(player, key)
                 end
                 controls.players[pname][key] = {true, os.clock()}
-            elseif key_status and controls.players[pname][key][1]==true then
+            elseif key_status and controls.players[pname][key][1] then
                 for _, callback in pairs(controls.registered_on_hold) do
                     callback(player, key, os.clock() - controls.players[pname][key][2])
                 end
-            elseif not key_status and controls.players[pname][key][1]==true then
+            elseif not key_status and controls.players[pname][key][1] then
                 for _, callback in pairs(controls.registered_on_release) do
                     callback(player, key, os.clock() - controls.players[pname][key][2])
                 end
