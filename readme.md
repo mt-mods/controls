@@ -28,5 +28,5 @@ supports all the keys minetest does
 
 special keys:
 ```
-@_drop: called when a player drops an item
+@_drop: called when a player drops an item (note: only supported in register_on_press api method)
 ```
