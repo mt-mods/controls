@@ -67,7 +67,7 @@ minetest.register_globalstep(function(dtime)
                 for _, callback in pairs(controls.registered_on_hold) do
                     callback(player, key, os.clock() - controls.players[pname][key][2])
                 end
-            elseif key_status==false and controls.players[pname][key][1]==true then
+            elseif not key_status and controls.players[pname][key][1]==true then
                 for _, callback in pairs(controls.registered_on_release) do
                     callback(player, key, os.clock() - controls.players[pname][key][2])
                 end
