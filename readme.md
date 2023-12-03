@@ -1,7 +1,5 @@
 # api
 
-note: supports all keys minetest does  
-
 ```lua
 controls.register_on_press(function(player, key)
     -- called on key down
@@ -22,4 +20,13 @@ controls.register_on_release(function(player, key, length)
     -- @key: key pressed
     -- @length: length of time key was held in seconds
 end)
+```
+
+# keys
+
+supports all the keys minetest does  
+
+special keys:
+```
+@_drop: called when a player drops an item
 ```
