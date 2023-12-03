@@ -76,6 +76,44 @@ minetest.register_globalstep(function(dtime)
     end
 end)
 
+--special keys
+minetest.register_on_mods_loaded(function()
+    for name, def in pairs(minetest.registered_nodes) do
+        local old_node_drop = def.on_drop
+        local on_drop = function(itemstack, dropper, ...)
+            for _, callback in pairs(controls.registered_on_press) do
+                callback(dropper, "_drop")
+            end
+            return old_node_drop(itemstack, dropper, unpack({...}))
+        end
+        minetest.override_item(name, {
+            on_drop = on_drop
+        })
+    end
+
+    local old_reg_node = minetest.register_node
+    function minetest.register_node(name, def)
+        if def.on_drop then
+            local old_node_drop = def.on_drop
+            def.on_drop = function(itemstack, dropper, ...)
+                for _, callback in pairs(controls.registered_on_press) do
+                    callback(dropper, "_drop")
+                end
+                return old_node_drop(itemstack, dropper, unpack({...}))
+            end
+        else
+            def.on_drop = function(itemstack, dropper, ...)
+                for _, callback in pairs(controls.registered_on_press) do
+                    callback(dropper, "_drop")
+                end
+                return minetest.item_drop(itemstack, dropper, unpack({...}))
+            end
+        end
+
+        old_reg_node(name, def)
+    end
+end)
+
 --tests
 if(controls.testsmode) then
     dofile(controls.modpath .. "/test.lua")
