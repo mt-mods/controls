@@ -61,14 +61,14 @@ minetest.register_globalstep(function(dtime)
                 for _, callback in pairs(controls.registered_on_press) do
                     callback(player, key)
                 end
-                controls.players[pname][key] = {true, os.clock()}
+                controls.players[pname][key] = {true, minetest.get_us_time()}
             elseif key_status and controls.players[pname][key][1] then
                 for _, callback in pairs(controls.registered_on_hold) do
-                    callback(player, key, os.clock() - controls.players[pname][key][2])
+                    callback(player, key, (minetest.get_us_time() - controls.players[pname][key][2]) / 1e6)
                 end
             elseif not key_status and controls.players[pname][key][1] then
                 for _, callback in pairs(controls.registered_on_release) do
-                    callback(player, key, os.clock() - controls.players[pname][key][2])
+                    callback(player, key, (minetest.get_us_time() - controls.players[pname][key][2]) / 1e6)
                 end
                 controls.players[pname][key] = {false}
             end
