@@ -58,7 +58,6 @@ minetest.register_globalstep(function(dtime)
         --consider using minetest.get_us_time() instead of os.clock()? would need to convert to seconds however
         for key, key_status in pairs(pcontrols) do
             if key_status and controls.players[pname][key][1]==false then
-                --minetest.chat_send_all("hiii")
                 for _, callback in pairs(controls.registered_on_press) do
                     callback(player, key)
                 end
