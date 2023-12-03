@@ -1,0 +1,1 @@
+controls_enable_tests (enable testing mode for player controls) bool false
