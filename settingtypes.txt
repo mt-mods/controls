@@ -1,1 +1,2 @@
-controls_enable_tests (enable testing mode for player controls) bool false
+# Enable debug mod for player controls. Sends chat messages to the player when callbacks are called.
+controls_enable_debug (Enable debug mode) bool false

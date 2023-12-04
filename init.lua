@@ -1,18 +1,10 @@
 controls = {
-    --util values
-    modpath = minetest.get_modpath("controls"),
-    testsmode = minetest.settings:get_bool("controls_enable_tests", false),
-
-    --location to store callbacks
     registered_on_press = {},
     registered_on_hold = {},
     registered_on_release = {},
-
-    --store player control data
     players = {},
 }
 
---api functions
 function controls.register_on_press(callback)
     table.insert(controls.registered_on_press, callback)
 end
@@ -25,58 +17,49 @@ function controls.register_on_release(callback)
     table.insert(controls.registered_on_release, callback)
 end
 
---set up key store on join
-minetest.register_on_joinplayer(function(player, _)
-    local pname = player:get_player_name()
-    local controls_names = player:get_player_control()
-
-    --note: could hardcode this, but this is more future proof in case minetest adds more controls
-    controls.players[pname] = {}
-    for key, _ in pairs(controls_names) do
-        --[[
-            in theory the control value is false when they join, but hard coding just in case
-            consider changing this to named key table instead of numeric for better readability???
-        ]]
-        controls.players[pname][key] = {false}
+minetest.register_on_joinplayer(function(player)
+    local name = player:get_player_name()
+    controls.players[name] = {}
+    for key in pairs(player:get_player_control()) do
+        controls.players[name][key] = {false}
     end
 end)
 
---discard when leaving
-minetest.register_on_leaveplayer(function(player, _)
-    local pname = player:get_player_name()
-    controls.players[pname] = nil
+minetest.register_on_leaveplayer(function(player)
+    local name = player:get_player_name()
+    controls.players[name] = nil
 end)
 
---event loop
-minetest.register_globalstep(function(dtime)
+local function update_player_controls(player, player_controls)
+	local time_now = minetest.get_us_time()
+	for key, pressed in pairs(player:get_player_control()) do
+		if pressed and not player_controls[key][1] then
+			for _, callback in pairs(controls.registered_on_press) do
+				callback(player, key)
+			end
+			player_controls[key] = {true, time_now}
+		elseif pressed and player_controls[key][1] then
+			for _, callback in pairs(controls.registered_on_hold) do
+				callback(player, key, (time_now - player_controls[key][2]) / 1e6)
+			end
+		elseif not pressed and player_controls[key][1] then
+			for _, callback in pairs(controls.registered_on_release) do
+				callback(player, key, (time_now - player_controls[key][2]) / 1e6)
+			end
+			player_controls[key] = {false}
+		end
+	end
+end
+
+minetest.register_globalstep(function()
     for _, player in pairs(minetest.get_connected_players()) do
-        local pname = player:get_player_name()
-        local pcontrols = player:get_player_control()
-
-        if not controls.players[pname] then break end --safety check
-
-        --consider using minetest.get_us_time() instead of os.clock()? would need to convert to seconds however
-        for key, key_status in pairs(pcontrols) do
-            if key_status and not controls.players[pname][key][1] then
-                for _, callback in pairs(controls.registered_on_press) do
-                    callback(player, key)
-                end
-                controls.players[pname][key] = {true, minetest.get_us_time()}
-            elseif key_status and controls.players[pname][key][1] then
-                for _, callback in pairs(controls.registered_on_hold) do
-                    callback(player, key, (minetest.get_us_time() - controls.players[pname][key][2]) / 1e6)
-                end
-            elseif not key_status and controls.players[pname][key][1] then
-                for _, callback in pairs(controls.registered_on_release) do
-                    callback(player, key, (minetest.get_us_time() - controls.players[pname][key][2]) / 1e6)
-                end
-                controls.players[pname][key] = {false}
-            end
-        end
+        local name = player:get_player_name()
+        if controls.players[name] then
+			update_player_controls(player, controls.players[name])
+		end
     end
 end)
 
---tests
-if(controls.testsmode) then
-    dofile(controls.modpath .. "/test.lua")
+if minetest.settings:get_bool("controls_enable_debug", false) then
+    dofile(minetest.get_modpath("controls") .. "/debug.lua")
 end
