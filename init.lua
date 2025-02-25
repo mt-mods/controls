@@ -33,20 +33,22 @@ end)
 local function update_player_controls(player, player_controls)
 	local time_now = minetest.get_us_time()
 	for key, pressed in pairs(player:get_player_control()) do
-		if pressed and not player_controls[key][1] then
-			for _, callback in pairs(controls.registered_on_press) do
-				callback(player, key)
+		if player_controls[key] then
+			if pressed and not player_controls[key][1] then
+				for _, callback in pairs(controls.registered_on_press) do
+					callback(player, key)
+				end
+				player_controls[key] = {true, time_now}
+			elseif pressed and player_controls[key][1] then
+				for _, callback in pairs(controls.registered_on_hold) do
+					callback(player, key, (time_now - player_controls[key][2]) / 1e6)
+				end
+			elseif not pressed and player_controls[key][1] then
+				for _, callback in pairs(controls.registered_on_release) do
+					callback(player, key, (time_now - player_controls[key][2]) / 1e6)
+				end
+				player_controls[key] = {false}
 			end
-			player_controls[key] = {true, time_now}
-		elseif pressed and player_controls[key][1] then
-			for _, callback in pairs(controls.registered_on_hold) do
-				callback(player, key, (time_now - player_controls[key][2]) / 1e6)
-			end
-		elseif not pressed and player_controls[key][1] then
-			for _, callback in pairs(controls.registered_on_release) do
-				callback(player, key, (time_now - player_controls[key][2]) / 1e6)
-			end
-			player_controls[key] = {false}
 		end
 	end
 end
